@@ -4,7 +4,8 @@
 
 ### Uygulamanın front-end kısmı tarafımca yazılmamıştır.
 
-### Uygulamayı test ekmek için;
+### Uygulamayı localde test ekmek için;
 
 Admin tarafı: http://localhost:7001/bookstore/api/v1/admin.html
+
 Store tarafı: http://localhost:7001/bookstore/api/v1/store.html
