@@ -1,7 +1,6 @@
 package com.example.bookstore.service.business;
 
 import java.util.Collection;
-import java.util.Comparator;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.modelmapper.ModelMapper;
@@ -29,15 +28,16 @@ public class StandardBookCatalogService implements BookCatalogService {
 
 	@Override
 	public BookResponse findBookByIsbn(String isbn) {
-		return modelMapper.map(bookCatalogRepository.findByIsbn(isbn).orElseThrow(
-				() -> new RestExceptionBase("Cannot find the book!", "unknown.book", "1")), BookResponse.class);
+		return modelMapper.map(
+				bookCatalogRepository.findByIsbn(isbn).orElseThrow( () -> new RestExceptionBase("Cannot find the book!", "unknown.book", "1")), 
+				BookResponse.class
+		);
 	}
 
 	@Override
 	@Transactional
 	public BookResponse deleteBook(String isbn) {
-		var managedBook = bookCatalogRepository.findByIsbn(isbn)
-				.orElseThrow(() -> new RestExceptionBase("Cannot delete the book!", "unknown.book", "2"));
+		var managedBook = bookCatalogRepository.findByIsbn(isbn).orElseThrow(() -> new RestExceptionBase("Cannot delete the book!", "unknown.book", "2"));
 		bookCatalogRepository.delete(managedBook);
 		return modelMapper.map(managedBook, BookResponse.class);
 
@@ -45,9 +45,11 @@ public class StandardBookCatalogService implements BookCatalogService {
 
 	@Override
 	public Collection<BookResponse> findAll(int pageNo, int pageSize) {
-		return bookCatalogRepository.findAll(PageRequest.of(pageNo, pageSize)).stream()
-				.map(book -> modelMapper.map(book, BookResponse.class)).sorted(Comparator.comparing(BookResponse::isbn))
-				.toList();
+		return bookCatalogRepository.findAll(PageRequest.of(pageNo, pageSize))
+				                    .getContent()
+				                    .stream()
+				                    .map(book -> modelMapper.map(book, BookResponse.class))
+				                    .toList();
 	}
 
 	@Override
@@ -55,8 +57,9 @@ public class StandardBookCatalogService implements BookCatalogService {
 	public BookResponse addBook(BookRequest book) {
 		try {
 			var managedBook = bookCatalogRepository.save(modelMapper.map(book, Book.class));
-			return modelMapper.map(managedBook,BookResponse.class);
+			return modelMapper.map(managedBook, BookResponse.class);
 		} catch (Exception e) {
+			System.err.println("Error has occured: " + e.getMessage());
 			throw new RestExceptionBase("Cannot insert book!", "duplicate.isbn", "3");
 		}
 	}
@@ -66,11 +69,11 @@ public class StandardBookCatalogService implements BookCatalogService {
 	public BookResponse updateBook(BookRequest book) {
 		String isbn = book.getIsbn();
 		var managedBook = bookCatalogRepository.findByIsbn(isbn)
-				.orElseThrow(() -> new RestExceptionBase("Cannot find the book!", "unknown.book", "4"));
+				                               .orElseThrow(() -> new RestExceptionBase("Cannot find the book!", "unknown.book", "4"));
 		managedBook.setPrice(book.getPrice());
 		managedBook.setPages(book.getPages());
 		managedBook.setCover(Base64.decodeBase64(book.getCover()));
-		bookCatalogRepository.saveAndFlush(managedBook);
+		bookCatalogRepository.save(managedBook);
 		return modelMapper.map(managedBook, BookResponse.class);
 	}
 
